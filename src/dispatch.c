@@ -29,4 +29,16 @@ void dispatch(struct pcap_pkthdr *header, const unsigned char *packet, int verbo
     packetToUse->header = header;
     packetToUse->packet = packet;
     packetToUse->next = NULL;
+
+    pthread_mutex_lock(&queue_mutex);
+
+    recursivelyAddPackets(packets, packetToUse);
+
+    pthread_mutex_unlock(&queue_mutex);
+}
+
+void recursivelyAddPackets(struct listElementPacket *head, struct listElementPacket *toAdd){
+    if(head == NULL) head = toAdd;
+    else if(head->next == NULL) head->next = toAdd;
+    else recursivelyAddPackets(head->next, toAdd);
 }
