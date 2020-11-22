@@ -88,6 +88,9 @@ void declareThreads(){
     threadsMade = 1;
     pthread_create(thread1, NULL, &threading, NULL);
     pthread_create(thread2, NULL, &threading, NULL);
+
+    packets = malloc(sizeof(struct listOfPackets));
+    packets->head = NULL;
 }
 
 void finsih(){
