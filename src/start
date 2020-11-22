@@ -1,0 +1,3 @@
+echo "starting server"
+/courses/cs241/coursework-multi &
+echo "server started"
