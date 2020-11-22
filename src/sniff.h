@@ -13,7 +13,6 @@ struct listelement{
   struct listelement *next;
 };
 
-struct listElementPacket;
 
 struct listElementPacket{
   struct pcap_pkthdr *header;
@@ -24,6 +23,7 @@ struct listElementPacket{
 struct list{
   struct listelement *head;
 };
+
 
 struct listOfPackets{
   struct headerListElement *head;
