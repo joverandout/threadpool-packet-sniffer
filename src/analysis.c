@@ -25,40 +25,40 @@ struct ARPpacket {
 	uint8_t arp_tpa[4];
 };
 
-// void linkedListWork(struct list *linkedList, struct iphdr* iplayer){
-//   if(linkedList->head == NULL){
-//     struct listelement *newElement = (struct listelement *) malloc(sizeof(struct listelement));
-//     newElement->val = iplayer->saddr;
-//     newElement->next = NULL; 
-//     linkedList->head = newElement;
-//     printf("ip: %lu", linkedList->head->val);
-//     return;
-//   }
-//   else{
-//     struct listelement *temporaryElement = linkedList->head;
-//     while(1){
-//       if(temporaryElement->next != NULL){
-//         temporaryElement = temporaryElement->next;
-//         if(temporaryElement->val == iplayer->saddr){
-//           printf("EQUAL %lu and %lu", temporaryElement->val && iplayer->saddr);
-//           return;
-//         }
-//       }
-//       else{
-//         if(temporaryElement->val == iplayer.saddr){
-//           printf("EQUAL %lu and %lu", temporaryElement->val && iplayer->saddr);
-//           return;
-//         }
-//         struct listelement *newElement = (struct listelement *) malloc(sizeof(struct listelement));
-//         newElement->val = iplayer->saddr;
-//         newElement->next = NULL;
-//         temporaryElement->next=newElement;
-//         printf("NEW %lu", newElement->val);
-//         return;
-//       }     
-//     }
-//   }
-// }
+void linkedListWork(struct list *linkedList, struct iphdr* iplayer){
+  if(linkedList->head == NULL){
+    struct listelement *newElement = (struct listelement *) malloc(sizeof(struct listelement));
+    newElement->val = iplayer->saddr;
+    newElement->next = NULL; 
+    linkedList->head = newElement;
+    printf("ip: %lu", linkedList->head->val);
+    return;
+  }
+  else{
+    struct listelement *temporaryElement = linkedList->head;
+    while(1){
+      if(temporaryElement->next != NULL){
+        temporaryElement = temporaryElement->next;
+        if(temporaryElement->val == iplayer->saddr){
+          printf("EQUAL %lu and %lu", temporaryElement->val && iplayer->saddr);
+          return;
+        }
+      }
+      else{
+        if(temporaryElement->val == iplayer->saddr){
+          printf("EQUAL %lu and %lu", temporaryElement->val && iplayer->saddr);
+          return;
+        }
+        struct listelement *newElement = (struct listelement *) malloc(sizeof(struct listelement));
+        newElement->val = iplayer->saddr;
+        newElement->next = NULL;
+        temporaryElement->next=newElement;
+        printf("NEW %lu", newElement->val);
+        return;
+      }     
+    }
+  }
+}
 
 struct counting *analyse(struct pcap_pkthdr *header,
              const unsigned char *packet,
@@ -81,9 +81,9 @@ struct counting *analyse(struct pcap_pkthdr *header,
     if(!(tcplayer->urg && tcplayer->ack && tcplayer->psh && tcplayer->rst && tcplayer->fin)){
         printf("SYN\n");
         // printf("packet ip: %lu", iplayer->saddr);
-        // tempCounters->number_of_syn_attacks= tempCounters->number_of_syn_attacks+1;
-        // printf("linked: %d", linkedList->head);
-        // linkedListWork(linkedList, iplayer);
+        tempCounters->number_of_syn_attacks= tempCounters->number_of_syn_attacks+1;
+        printf("linked: %d", linkedList->head);
+        linkedListWork(linkedList, iplayer);
         // printf("before: %d\n", tempCounters->number_of_syn_attacks);
     }
   }
