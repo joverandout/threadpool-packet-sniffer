@@ -60,6 +60,8 @@ void sniff(char *interface, int verbose) {
       if (verbose) {
         dump(packet, header.len);
       }
+      
+      makethreads();
       // Dispatch packet for processing
       dispatch(&header, packet, verbose, &synCount, linkedList);
       // printf("%d\n", synCount);

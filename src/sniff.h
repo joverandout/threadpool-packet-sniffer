@@ -1,13 +1,19 @@
 #ifndef CS241_SNIFF_H
 #define CS241_SNIFF_H
 
+#include "dispatch.h"
+
 void sniff(char *interface, int verbose);
 void dump(const unsigned char *data, int length);
+
+struct listelement;
 
 struct listelement{
   long val;
   struct listelement *next;
 };
+
+struct listElementPacket;
 
 struct listElementPacket{
   struct pcap_pkthdr *header;

@@ -23,7 +23,7 @@ struct ARPpacket {
 	uint8_t arp_tpa[4];
 };
 
-void linkedListWork(struct list *linkedList, struct iphdr* iplayer){
+void addIpToTheList(struct list *linkedList, struct iphdr* iplayer){
   if(linkedList->head == NULL){
     struct listelement *newElement = (struct listelement *) malloc(sizeof(struct listelement));
     newElement->val = iplayer->saddr;
@@ -81,7 +81,7 @@ struct counting *analyse(struct pcap_pkthdr *header,
         // printf("packet ip: %lu", iplayer->saddr);
         tempCounters->number_of_syn_attacks= tempCounters->number_of_syn_attacks+1;
         // printf("linked: %d", linkedList->head);
-        linkedListWork(linkedList, iplayer);
+        addIpToTheList(linkedList, iplayer);
         // printf("before: %d\n", tempCounters->number_of_syn_attacks);
     }
   }

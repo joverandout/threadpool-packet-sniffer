@@ -36,9 +36,6 @@ void dispatch(struct pcap_pkthdr *header,
   // printf("syn counter: %d\n", tempCounters->number_of_syn_attacks);
   //printf("blacklisted counter: %d\n", tempCounters->number_of_blacklisted_IDs);
 
-  pthread_create(&tid1, NULL, threadProcess, (void *) &location1);
-  pthread_create(&tid2, NULL, threadProcess, (void *) &location2);
-
   struct listElementPacket *nextPacket = malloc(sizeof(struct listElementPacket));
 
   nextPacket->header = header;
@@ -55,7 +52,6 @@ void dispatch(struct pcap_pkthdr *header,
   //then unlock again
 }
 
-
 void recursivelyAddToPacketList(struct listElementPacket *head, struct listElementPacket * toAdd){
   if(head == NULL){
     head == toAdd;
@@ -69,8 +65,6 @@ void recursivelyAddToPacketList(struct listElementPacket *head, struct listEleme
     recursivelyAddToPacketList(head->next, toAdd);
   }
 }
-
-
 
 void endOfThreading(struct list *linkedList){
   totalCount = malloc(sizeof(struct counting));
@@ -90,10 +84,16 @@ int countSynIps(struct listelement *currentListElement, int count){
   return count;
 }
 
+void makeList(){
+  packets = malloc(sizeof(struct listOfPackets));
+  packets->head=NULL;
+}
+
 
 
 //This is the process run by each of the threads
 void *threadProcess(void *arg, struct list *linkedList){
+  makeList();
   //this is the count for the individual thread 
   struct counting *threadCount = malloc(sizeof(struct counting));
 
@@ -107,7 +107,7 @@ void *threadProcess(void *arg, struct list *linkedList){
   while(1){
     pthread_mutex_lock(&queue_mutex);
     //check theres a packet in the list
-    if(packets->head != NULL){
+    if(!(packets->head == NULL)){
       //get packet and assign the address to the next packet
 
       pthread_mutex_unlock(&queue_mutex);
@@ -115,9 +115,10 @@ void *threadProcess(void *arg, struct list *linkedList){
       //This is just a counting struct to pass the analyse function
       struct counting *temporaryCount = malloc(sizeof(struct counting));
       //This is the result of the analyse function
+      
       struct counting *resultOfAnalyse = analyse(packets->head->header, packets->head->packet, 0, linkedList);
 
-      packets->head = packets->head.next;
+      packets->head = packets->head->next;
 
       threadCount->number_of_arp_attacks=threadCount->number_of_arp_attacks+resultOfAnalyse->number_of_arp_attacks;
       threadCount->number_of_blacklisted_IDs=threadCount->number_of_blacklisted_IDs+resultOfAnalyse->number_of_blacklisted_IDs;
@@ -130,7 +131,16 @@ void *threadProcess(void *arg, struct list *linkedList){
       pthread_mutex_unlock(&queue_mutex);
     }
   }
-
   return threadCount;
 }
+
+
+void makeThreads(){
+  pthread_create(&tid1, NULL, &threadProcess, (void *) &location1);
+  pthread_create(&tid2, NULL, &threadProcess, (void *) &location2);
+
+  makeList();
+}
+
+
 
