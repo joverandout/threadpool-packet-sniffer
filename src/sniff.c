@@ -16,8 +16,11 @@ struct list *linkedList;
 // Application main sniffing loop
 
 void controlCHandler(int a){
-  if(linkedList->head!=NULL) recursivelyFreeMemory(linkedList->head);
-  printf("all linked list data freed\n");
+  if(linkedList->head!=NULL){
+    recursivelyFreeMemory(linkedList->head);
+    printf("all linked list data freed\n");
+  }
+  else printf("linked list was not used so no data was freed");
   exit(0);
 }
 

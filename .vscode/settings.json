@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "tuple": "c"
+        "tuple": "c",
+        "list": "c"
     }
 }

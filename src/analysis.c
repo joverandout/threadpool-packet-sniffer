@@ -130,6 +130,8 @@ struct counting *analyse(struct pcap_pkthdr *header,
       printf("Arp after: %d\n", tempCounters->number_of_arp_attacks);
     }
   }    
+
+  if(verbose == 1) printpacket(packet, 1000);
   
   return tempCounters;
 }
