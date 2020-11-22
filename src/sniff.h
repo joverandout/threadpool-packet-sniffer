@@ -9,8 +9,18 @@ struct listelement{
   struct listelement *next;
 };
 
+struct listElementPacket{
+  struct pcap_pkthdr *header;
+  const unsigned char *packet;
+  struct listElementPacket *next;
+};
+
 struct list{
-    struct listelement *head;
+  struct listelement *head;
+};
+
+struct listOfPackets{
+  struct headerListElement *head;
 };
 
 

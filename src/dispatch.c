@@ -15,6 +15,7 @@ struct counting* totalCount;
 pthread_t tid1, tid2;
 pthread_mutex_t queue_mutex;
 struct thread_arg location1, location2;
+struct listOfPackets *packets;
 
 
 void dispatch(struct pcap_pkthdr *header,
@@ -26,18 +27,47 @@ void dispatch(struct pcap_pkthdr *header,
   // TODO: Your part 2 code here
   // This method should handle dispatching of work to threads. At present
   // it is a simple passthrough as this skeleton is single-threaded.
-  counting *tempCounters = analyse(header, packet, verbose, linkedList);
+
+
+  // counting *tempCounters = analyse(header, packet, verbose, linkedList);
+
+
   // printf("arp counter: %d\n", tempCounters->number_of_arp_attacks);
   // printf("syn counter: %d\n", tempCounters->number_of_syn_attacks);
   //printf("blacklisted counter: %d\n", tempCounters->number_of_blacklisted_IDs);
 
   pthread_create(&tid1, NULL, threadProcess, (void *) &location1);
   pthread_create(&tid2, NULL, threadProcess, (void *) &location2);
-  pthread_mutex_lock()
-  //As a new packet comes in make sure to lock to prevent an error
 
-  pthread_mutex_unlock()
-  //then unlock
+  struct listElementPacket *nextPacket = malloc(sizeof(struct listElementPacket));
+
+  nextPacket->header = header;
+  nextPacket->packet = packet;
+  nextPacket->next = NULL;
+
+  //As a new packet comes in make sure to lock to prevent an error
+  pthread_mutex_lock(&queue_mutex);
+
+  //Add the packet to the list
+  recursivelyAddToPacketList(packets, nextPacket);
+
+  pthread_mutex_unlock(&queue_mutex);
+  //then unlock again
+}
+
+
+void recursivelyAddToPacketList(struct listElementPacket *head, struct listElementPacket * toAdd){
+  if(head == NULL){
+    head == toAdd;
+    return;
+  }  
+  if(head->next == NULL){
+    head->next=  toAdd;
+    return;
+  }
+  else{
+    recursivelyAddToPacketList(head->next, toAdd);
+  }
 }
 
 
@@ -76,7 +106,8 @@ void *threadProcess(void *arg, struct list *linkedList){
 
   while(1){
     pthread_mutex_lock(&queue_mutex);
-    if(/*packet isn't null*/){
+    //check theres a packet in the list
+    if(packets->head != NULL){
       //get packet and assign the address to the next packet
 
       pthread_mutex_unlock(&queue_mutex);
@@ -84,12 +115,13 @@ void *threadProcess(void *arg, struct list *linkedList){
       //This is just a counting struct to pass the analyse function
       struct counting *temporaryCount = malloc(sizeof(struct counting));
       //This is the result of the analyse function
-      struct counting *resultOfAnalyse = analyse(header, packet, 0, linkedList);
+      struct counting *resultOfAnalyse = analyse(packets->head->header, packets->head->packet, 0, linkedList);
+
+      packets->head = packets->head.next;
 
       threadCount->number_of_arp_attacks=threadCount->number_of_arp_attacks+resultOfAnalyse->number_of_arp_attacks;
       threadCount->number_of_blacklisted_IDs=threadCount->number_of_blacklisted_IDs+resultOfAnalyse->number_of_blacklisted_IDs;
       threadCount->number_of_syn_attacks=threadCount->number_of_syn_attacks+resultOfAnalyse->number_of_syn_attacks;
-
 
       free(temporaryCount);
       free(resultOfAnalyse);
