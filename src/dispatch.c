@@ -4,6 +4,7 @@
 #include <pcap.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <string.h>
 #include <stdio.h>
 
 #include "analysis.h"
@@ -11,12 +12,13 @@
 
 struct listOfPackets *packets;
 unsigned long pcount = 0;
-char exitThreads = 0;
-char run = 0;
+char threadsMade = 0;
+char run = 1;
 
 struct linkedList *newList;
 
 pthread_mutex_t queue_mutex=PTHREAD_MUTEX_INITIALIZER;
+pthread_t thread1, thread2;
 
 void dispatch(struct pcap_pkthdr *header, const unsigned char *packet, int verbose, struct list *list)
 {
@@ -80,4 +82,53 @@ void *threading(){
     }
 
     return (void *)threadCount;
+}
+
+void declareThreads(){
+    threadsMade = 1;
+    pthread_create(thread1, NULL, &threading, NULL);
+    pthread_create(thread2, NULL, &threading, NULL);
+}
+
+void finsih(){
+    run = 0;
+    if(threadsMade){
+        struct counting *total = malloc(sizeof(struct counting));
+        if(total == NULL) exit (1);
+        total->number_of_arp_attacks = 0;
+        total->number_of_blacklisted_IDs=0;
+        total->number_of_syn_attacks=0;
+
+        int i;
+        void* ptr;	
+        pthread_join(thread1, &ptr);
+        
+        struct counting* thread_count = (struct counters *)ptr;
+        addToTotal(total, thread_count);
+
+        free(ptr);
+
+        pthread_join(thread2, &ptr);
+        
+        thread_count = (struct counters *)ptr;
+        addToTotal(total, thread_count);
+
+        free(ptr);
+
+
+        printf("\n\n === Packet Sniffing Report === \n");
+		printf("ARP Poision Attacks = %ld\n", total->number_of_arp_attacks);
+		printf("SYN Attacks = %ld\n", total->number_of_syn_attacks);
+		printf("Blacklisted Requests = %ld\n\n\n", total->number_of_blacklisted_IDs);
+		
+		//Free the total_count counters struct
+		free(total);
+    }
+}
+
+
+void addToTotal(struct counting *total, struct counting *addToTotal){
+    total->number_of_arp_attacks += addToTotal->number_of_arp_attacks;
+    total->number_of_blacklisted_IDs += addToTotal->number_of_blacklisted_IDs;
+    total->number_of_syn_attacks += addToTotal->number_of_syn_attacks;
 }
