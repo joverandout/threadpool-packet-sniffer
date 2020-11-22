@@ -15,8 +15,6 @@
 
 #define byte unsigned char
 
-
-
 struct ARPpacket {
 	struct	arphdr ea_hdr;	
 	uint8_t arp_sha[ETH_ALEN];
@@ -40,20 +38,20 @@ void linkedListWork(struct list *linkedList, struct iphdr* iplayer){
       if(temporaryElement->next != NULL){
         temporaryElement = temporaryElement->next;
         if(temporaryElement->val == iplayer->saddr){
-          printf("EQUAL %lu and %lu", temporaryElement->val && iplayer->saddr);
+          // printf("EQUAL %lu and %lu", temporaryElement->val && iplayer->saddr);
           return;
         }
       }
       else{
         if(temporaryElement->val == iplayer->saddr){
-          printf("EQUAL %lu and %lu", temporaryElement->val && iplayer->saddr);
+          // printf("EQUAL %lu and %lu", temporaryElement->val && iplayer->saddr);
           return;
         }
         struct listelement *newElement = (struct listelement *) malloc(sizeof(struct listelement));
         newElement->val = iplayer->saddr;
         newElement->next = NULL;
         temporaryElement->next=newElement;
-        printf("NEW %lu", newElement->val);
+        // printf("NEW %lu", newElement->val);
         return;
       }     
     }
@@ -82,11 +80,13 @@ struct counting *analyse(struct pcap_pkthdr *header,
         printf("SYN\n");
         // printf("packet ip: %lu", iplayer->saddr);
         tempCounters->number_of_syn_attacks= tempCounters->number_of_syn_attacks+1;
-        printf("linked: %d", linkedList->head);
+        // printf("linked: %d", linkedList->head);
         linkedListWork(linkedList, iplayer);
         // printf("before: %d\n", tempCounters->number_of_syn_attacks);
     }
   }
+
+
 
   if(ntohs(linklayer->ether_type) == ETHERTYPE_IP){
       const unsigned char *ip = packet + ETH_HLEN + (4*iplayer->ihl);
@@ -98,7 +98,7 @@ struct counting *analyse(struct pcap_pkthdr *header,
       if(x > 0){
       unsigned char *new_string = malloc(sizeof(char)*(x+1));
       if((ntohs(tcplayer->dest) == 80)){
-        printf("destination: %d\n",ntohs(tcplayer->dest));
+        // printf("destination: %d\n",ntohs(tcplayer->dest));
         for (i = 0; i < x; i++)
         {
           char c = (char) http[i];
@@ -107,10 +107,11 @@ struct counting *analyse(struct pcap_pkthdr *header,
         new_string[x] = '\0';
       }    
       if (strstr(new_string, "www.google.co.uk") && (ntohs(tcplayer->dest) == 80)){
-        // printf("BEFORE BL: %d\n", tempCounters->number_of_blacklisted_IDs); 
+        printf("BEFORE BL: %d\n", tempCounters->number_of_blacklisted_IDs); 
         tempCounters->number_of_blacklisted_IDs = tempCounters->number_of_blacklisted_IDs+1;
-        // printf("AFTER BL: %d\n", tempCounters->number_of_blacklisted_IDs); 
+        printf("AFTER BL: %d\n", tempCounters->number_of_blacklisted_IDs); 
       }
+    }
   }
 
   if(ntohs(linklayer->ether_type) == ETHERTYPE_ARP){
@@ -119,6 +120,8 @@ struct counting *analyse(struct pcap_pkthdr *header,
     struct arphdr *arp_Header = (struct arphdr *) &arp_Packet->ea_hdr;
 
 
+    printf("%d <--> %d\n", ntohs(arp_Header->ar_op), ARPOP_REPLY);
+
     if(ntohs(arp_Header->ar_op) == ARPOP_REPLY){
       //increment arp counter here
       //Detect ARP poisoning attack
@@ -126,14 +129,10 @@ struct counting *analyse(struct pcap_pkthdr *header,
       tempCounters->number_of_arp_attacks=tempCounters->number_of_arp_attacks+1;
       printf("Arp after: %d\n", tempCounters->number_of_arp_attacks);
     }
-
-    printf("ARP\n");
-  }
-      
-  }
+  }    
+  
   return tempCounters;
 }
-
 
 //procedure to print out the raw packet and so check if data is correct
 void printpacket(const unsigned char *packet, int length){
@@ -146,5 +145,4 @@ void printpacket(const unsigned char *packet, int length){
     }
     printf("\n"); //and a line
   }
-  
 }

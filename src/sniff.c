@@ -16,25 +16,16 @@ struct list *linkedList;
 // Application main sniffing loop
 
 void controlCHandler(int a){
-  struct listelement *temporaryElement = linkedList->head;
-  int bool = 1;
-  while(bool = 1){
-    if(linkedList->head == NULL){
-      bool = 0;
-    }
-    else{
-      if(temporaryElement->next == NULL){
-        free(temporaryElement);
-        bool = 0;
-      }
-      else{
-        struct listelement *temporaryTwo = temporaryElement->next;
-        free(temporaryElement);
-        temporaryElement = temporaryTwo;
-      }
-    }
-  }
+  if(linkedList->head!=NULL) recursivelyFreeMemory(linkedList->head);
+  printf("all linked list data freed\n");
   exit(0);
+}
+
+void recursivelyFreeMemory(struct listelement *currentListElement){
+  if(currentListElement->next != NULL){
+    recursivelyFreeMemory(currentListElement->next);
+  }
+  free(currentListElement);
 }
 
 void sniff(char *interface, int verbose) {
