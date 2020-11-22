@@ -6,9 +6,15 @@
 #include "analysis.h"
 #include "sniff.h"
 
+
+struct thread_arg{
+  counting *valuesPerThread;
+};
+
 struct counting* totalCount;
-pthread_t threads[2];
+pthread_t tid1, tid2;
 pthread_mutex_t queue_mutex;
+struct thread_arg location1, location2;
 
 
 void dispatch(struct pcap_pkthdr *header,
@@ -25,7 +31,8 @@ void dispatch(struct pcap_pkthdr *header,
   // printf("syn counter: %d\n", tempCounters->number_of_syn_attacks);
   //printf("blacklisted counter: %d\n", tempCounters->number_of_blacklisted_IDs);
 
-
+  pthread_create(&tid1, NULL, threadProcess, (void *) &location1);
+  pthread_create(&tid2, NULL, threadProcess, (void *) &location2);
   pthread_mutex_lock()
   //As a new packet comes in make sure to lock to prevent an error
 
@@ -33,14 +40,6 @@ void dispatch(struct pcap_pkthdr *header,
   //then unlock
 }
 
-void threadCreation(){
-  int i;
-  for (i = 0; i < 2; i++) //create 2worker threads
-  {
-    pthread_create(, NULL, , NULL);
-  }
-  
-}
 
 
 void endOfThreading(struct list *linkedList){
@@ -64,20 +63,42 @@ int countSynIps(struct listelement *currentListElement, int count){
 
 
 //This is the process run by each of the threads
-void *threadProcess(){
+void *threadProcess(void *arg, struct list *linkedList){
   //this is the count for the individual thread 
   struct counting *threadCount = malloc(sizeof(struct counting));
 
+  struct thread_arg *sptr =( struct thread_arg*) arg;
+
+  threadCount->number_of_arp_attacks=0;
+  threadCount->number_of_blacklisted_IDs=0;
+  threadCount->number_of_syn_attacks=0;
+
+
   while(1){
     pthread_mutex_lock(&queue_mutex);
+    if(/*packet isn't null*/){
+      //get packet and assign the address to the next packet
+
+      pthread_mutex_unlock(&queue_mutex);
+
+      //This is just a counting struct to pass the analyse function
+      struct counting *temporaryCount = malloc(sizeof(struct counting));
+      //This is the result of the analyse function
+      struct counting *resultOfAnalyse = analyse(header, packet, 0, linkedList);
+
+      threadCount->number_of_arp_attacks=threadCount->number_of_arp_attacks+resultOfAnalyse->number_of_arp_attacks;
+      threadCount->number_of_blacklisted_IDs=threadCount->number_of_blacklisted_IDs+resultOfAnalyse->number_of_blacklisted_IDs;
+      threadCount->number_of_syn_attacks=threadCount->number_of_syn_attacks+resultOfAnalyse->number_of_syn_attacks;
 
 
-
+      free(temporaryCount);
+      free(resultOfAnalyse);
+    }
     else{
       pthread_mutex_unlock(&queue_mutex);
     }
   }
 
-  counting = analyse
+  return threadCount;
 }
 
