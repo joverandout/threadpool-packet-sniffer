@@ -31,6 +31,15 @@ void dispatch(struct pcap_pkthdr *header,
   //then unlock
 }
 
+void threadCreation(){
+  int i;
+  for (i = 0; i < 2; i++) //create 2 threads
+  {
+    pthread_create();
+  }
+  
+}
+
 
 void endOfThreading(struct list *linkedList){
   totalCount = malloc(sizeof(struct counting));
