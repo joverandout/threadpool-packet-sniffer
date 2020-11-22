@@ -7,6 +7,8 @@
 #include "sniff.h"
 
 struct counting* totalCount;
+pthread_t threads[2];
+pthread_mutex_t queue_mutex;
 
 
 void dispatch(struct pcap_pkthdr *header,
@@ -33,9 +35,9 @@ void dispatch(struct pcap_pkthdr *header,
 
 void threadCreation(){
   int i;
-  for (i = 0; i < 2; i++) //create 2 threads
+  for (i = 0; i < 2; i++) //create 2worker threads
   {
-    pthread_create();
+    pthread_create(, NULL, , NULL);
   }
   
 }
@@ -63,6 +65,19 @@ int countSynIps(struct listelement *currentListElement, int count){
 
 //This is the process run by each of the threads
 void *threadProcess(){
+  //this is the count for the individual thread 
+  struct counting *threadCount = malloc(sizeof(struct counting));
 
+  while(1){
+    pthread_mutex_lock(&queue_mutex);
+
+
+
+    else{
+      pthread_mutex_unlock(&queue_mutex);
+    }
+  }
+
+  counting = analyse
 }
 
