@@ -21,7 +21,6 @@ int runthreads = 1;
 int threadsExist = 0;
 
 pthread_mutex_t packetLock = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t synIpListLock = PTHREAD_MUTEX_INITIALIZER;
 
 
 // Application main sniffing loop
@@ -42,7 +41,7 @@ void recursivelyFreeMemory(struct listelement *currentListElement){
   if(currentListElement->next != NULL){
     recursivelyFreeMemory(currentListElement->next);
   }
-  free(currentListElement);
+  //free(currentListElement);
   synIpCount++;
 }
 
@@ -51,8 +50,8 @@ void recursivelyFreePackets(struct packetListElement *currentListElement){
     recursivelyFreeMemory(currentListElement->next);
   }
   synIpCount++;
-  free(currentListElement->packet);
-  free(currentListElement);
+  //free(currentListElement->packet);
+  //free(currentListElement);
 }
 
 void finalPrint(int synIP){
@@ -60,7 +59,7 @@ void finalPrint(int synIP){
   printf("%d SYN packets detected from %d different IPs (syn attack)\n", finalCount->number_of_syn_attacks, synIP);
   printf("%d ARP responses (cache poisoning)\n", finalCount->number_of_arp_attacks);
   printf("%d URL Blacklist violations\n", finalCount->number_of_blacklisted_IDs);
-  free(finalCount);
+  //free(finalCount);
 }
 
 void *threadFunction(){
@@ -70,30 +69,27 @@ void *threadFunction(){
 	localCountsPerThread->number_of_blacklisted_IDs = 0;
 	localCountsPerThread->number_of_syn_attacks = 0;
 
+  printf("THREAD\n");
+
   while(runthreads){
     pthread_mutex_lock(&packetLock);
-    if(packets->head){
+    if(packets->head != NULL){
+      printf("not null\n");
       struct packetListElement *temporaryThreadPacket = packets->head;
       packets->head = temporaryThreadPacket->next;
 
-
       struct counting *temp = dispatch(temporaryThreadPacket->header, temporaryThreadPacket->packet, 0, linkedList);
-
 
       pthread_mutex_unlock(&packetLock);
 
-      // phtread_mutex_lock(&synIpListLock);
-
-
-      // phtread_mutex_unlock(&synIpListLock);
-
       localCountsPerThread->number_of_arp_attacks += temp->number_of_arp_attacks;
       localCountsPerThread->number_of_syn_attacks += temp->number_of_syn_attacks;
+      printf("ARP: %d\n", temp->number_of_arp_attacks);
       localCountsPerThread->number_of_blacklisted_IDs += temp->number_of_blacklisted_IDs;
 
-      free((void *)temporaryThreadPacket->packet);
-      free(temp);
-      free(temporaryThreadPacket);
+      // free((void *)temporaryThreadPacket->packet);
+      // free(temp);
+      // free(temporaryThreadPacket);
     }
     else{
       pthread_mutex_unlock(&packetLock);
@@ -110,24 +106,28 @@ void endThreads(){
       void* ptr;
       pthread_join(threads[i], &ptr);
 
-      struct counting *localCountsPerThread = (counting *)ptr;
+      printf("segfault here\n");
+      struct counting *localCountsPerThread = (struct counting *)ptr;
 
-      finalCount->number_of_arp_attacks += localCountsPerThread->number_of_arp_attacks;
+      printf("%d\n", threads[i]->localCountsPerThread->number_of_arp_attacks);
+      finalCount->number_of_arp_attacks += localCountsPerThread->number_of_arp_attacks);
       finalCount->number_of_syn_attacks += localCountsPerThread->number_of_syn_attacks;
       finalCount->number_of_blacklisted_IDs += localCountsPerThread->number_of_blacklisted_IDs;
     
-      free(ptr);
+      //free(ptr);
     }
   }
 }
 
-void initiaiseStructsAndThreads(){
+void initialiseStructs(){
   linkedList = malloc(sizeof(struct list));
   finalCount = malloc(sizeof(struct counting));
   packets = malloc(sizeof(struct packetList));
   packets->head = NULL;
-  linkedList->head = NULL;
+  linkedList->head = NULL;  
+}
 
+void makeThreads(){
   int i;
   for (i = 0; i < 2; i++)
   {
@@ -135,11 +135,10 @@ void initiaiseStructsAndThreads(){
   }
 
   threadsExist = 1;
-  
 }
 
 void sniff(char *interface, int verbose) {
-  initiaiseStructsAndThreads();
+  initialiseStructs();
   signal(SIGINT, &controlCHandler);
   // Open network interface for packet capture
   char errbuf[PCAP_ERRBUF_SIZE];
@@ -153,6 +152,9 @@ void sniff(char *interface, int verbose) {
   // Capture packets (very ugly code)
   struct pcap_pkthdr header;
   const unsigned char *packet;
+
+  makeThreads();
+
   while (1) {
     // Capture a  packet
     packet = pcap_next(pcap_handle, &header);
@@ -175,24 +177,21 @@ void sniff(char *interface, int verbose) {
       toAdd->header = &header;
       toAdd->next =NULL;
 
-      // pthread_mutex_lock(&packetLock);
+
+      pthread_mutex_lock(&packetLock);
 
       if(packets->head == NULL) //there is no packets in the queue
       {
         packets->head = toAdd;
-        // printf("added\n");
+        printf("added\n");
       }
       else{
         recursivelAddToQueue(packets->head, toAdd);
-        // printf("added recursively\n");
+        printf("added recursively\n");
       }
 
-      // pthread_mutex_unlock(&packetLock);
+      pthread_mutex_unlock(&packetLock);
 
-
-      finalCount->number_of_arp_attacks += (dispatch(&header, packet, verbose, linkedList))->number_of_arp_attacks;
-      finalCount->number_of_syn_attacks += (dispatch(&header, packet, verbose, linkedList))->number_of_syn_attacks;
-      finalCount->number_of_blacklisted_IDs += (dispatch(&header, packet, verbose, linkedList))->number_of_blacklisted_IDs;
 
       // Dispatch packet for processing
       
