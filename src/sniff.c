@@ -95,6 +95,7 @@ void *threadFunction(){
       pthread_mutex_unlock(&packetLock);
     }
   }
+  pthread_exit((void *) localCountsPerThread);
 }
 
 void endThreads(){
@@ -109,8 +110,7 @@ void endThreads(){
       printf("segfault here\n");
       struct counting *localCountsPerThread = (struct counting *)ptr;
 
-      printf("%d\n", threads[i]->localCountsPerThread->number_of_arp_attacks);
-      finalCount->number_of_arp_attacks += localCountsPerThread->number_of_arp_attacks);
+      finalCount->number_of_arp_attacks += localCountsPerThread->number_of_arp_attacks;
       finalCount->number_of_syn_attacks += localCountsPerThread->number_of_syn_attacks;
       finalCount->number_of_blacklisted_IDs += localCountsPerThread->number_of_blacklisted_IDs;
     
