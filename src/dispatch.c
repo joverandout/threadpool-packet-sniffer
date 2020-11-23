@@ -50,6 +50,7 @@ void recursivelyAddPackets(struct listElementPacket *head, struct listElementPac
 }
 
 void *threading(){
+
     struct counting *threadCount = malloc(sizeof(struct counting));
     if (threadCount == NULL) exit(1);
 
@@ -86,6 +87,8 @@ void *threading(){
 
 void declareThreads(){
     threadsMade = 1;
+
+    //SEG FAULT CAUSED AT CREATE
     pthread_create(thread1, NULL, &threading, NULL);
     pthread_create(thread2, NULL, &threading, NULL);
 

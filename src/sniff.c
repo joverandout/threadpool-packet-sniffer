@@ -60,9 +60,11 @@ void sniff(char *interface, int verbose) {
       if (verbose) {
         dump(packet, header.len);
       }
-      
-      // makethreads();
+      printf("DOES IT EVEN GET HERE\n");
+
+      declareThreads();
       // Dispatch packet for processing
+
       dispatch(&header, packet, verbose, linkedList);
       // printf("%d\n", synCount);
     }

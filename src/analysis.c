@@ -63,7 +63,7 @@ struct counting *analyse(struct pcap_pkthdr *header,
              int verbose,
              struct list *linkedList
              ){
-
+  printf("DOES IT EVEN GET HERE\n");
   //define a new counting variable
   counting *tempCounters = malloc(sizeof(struct counting));
   tempCounters->number_of_arp_attacks = 0;
