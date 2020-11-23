@@ -68,7 +68,6 @@ struct counting *analyse(struct pcap_pkthdr *header,
   counting *tempCounters = malloc(sizeof(struct counting));
   tempCounters->number_of_arp_attacks = 0;
   tempCounters->number_of_syn_attacks = 0;
-  tempCounters->number_of_syn_IPS = 0;
   tempCounters->number_of_blacklisted_IDs=0;
 
   struct ether_header *linklayer = (struct ether_header *) packet;

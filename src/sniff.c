@@ -43,11 +43,49 @@ void finalPrint(int synIP){
   free(finalCount);
 }
 
-void sniff(char *interface, int verbose) {
+void *threadFunction(){
+  //LOCK HERE
+  if(packets->head){
+    struct packetListElement *temporaryThreadPacket = packets->head;
+    packets->head = temporaryThreadPacket->next;
+
+    //UNLOCK HERE
+
+    //LOCK THE SYN LIST HERE
+
+    struct counting *temp = dispatch(temporaryThreadPacket->header, temporaryThreadPacket->packet, 0, linkedList);
+
+    finalCount->number_of_arp_attacks += temp->number_of_arp_attacks;
+    finalCount->number_of_syn_attacks += temp->number_of_syn_attacks;
+    finalCount->number_of_blacklisted_IDs += temp->number_of_blacklisted_IDs;
+    //UNLOCK SYN LIST HERE
+
+    free((void *)temporaryThreadPacket->packet);
+    free(temp);
+    free(temporaryThreadPacket);
+  }
+  else{
+    //unlock the head of the packet
+  }
+}
+
+void initiaiseStructsAndThreads(){
   linkedList = malloc(sizeof(struct list));
   finalCount = malloc(sizeof(struct counting));
   packets = malloc(sizeof(struct packetList));
+  packets->head = NULL;
   linkedList->head = NULL;
+
+  int i;
+  for (i = 0; i < 2; i++)
+  {
+    pthread_create(&threads[i], NULL, &threadFunction, NULL);
+  }
+  
+}
+
+void sniff(char *interface, int verbose) {
+  initiaiseStructsAndThreads();
   signal(SIGINT, &controlCHandler);
   // Open network interface for packet capture
   char errbuf[PCAP_ERRBUF_SIZE];
@@ -97,12 +135,13 @@ void sniff(char *interface, int verbose) {
 
 
       // Dispatch packet for processing
-      finalCount->number_of_arp_attacks += (dispatch(&header, packet, verbose, linkedList))->number_of_arp_attacks;
-      finalCount->number_of_syn_attacks += (dispatch(&header, packet, verbose, linkedList))->number_of_syn_attacks;
-      finalCount->number_of_blacklisted_IDs += (dispatch(&header, packet, verbose, linkedList))->number_of_blacklisted_IDs;
+      
     }
   }
 }
+
+
+
 
 
 void recursivelAddToQueue(struct packetListElement *head, struct packetListElement *toAdd){
