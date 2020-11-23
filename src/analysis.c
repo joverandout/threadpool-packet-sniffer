@@ -76,7 +76,7 @@ struct counting *analyse(struct pcap_pkthdr *header,
 
   if(tcplayer->syn){
     if(!(tcplayer->urg && tcplayer->ack && tcplayer->psh && tcplayer->rst && tcplayer->fin)){
-        printf("SYN\n");
+        // printf("SYN\n");
         // printf("packet ip: %lu", iplayer->saddr);
         tempCounters->number_of_syn_attacks = tempCounters->number_of_syn_attacks+1;
         // printf("linked: %d", linkedList->head);
@@ -105,9 +105,9 @@ struct counting *analyse(struct pcap_pkthdr *header,
         new_string[x] = '\0';
       }    
       if (strstr(new_string, "www.google.co.uk") && (ntohs(tcplayer->dest) == 80)){
-        printf("BEFORE BL: %d\n", tempCounters->number_of_blacklisted_IDs); 
+        // printf("BEFORE BL: %d\n", tempCounters->number_of_blacklisted_IDs); 
         tempCounters->number_of_blacklisted_IDs = tempCounters->number_of_blacklisted_IDs+1;
-        printf("AFTER BL: %d\n", tempCounters->number_of_blacklisted_IDs); 
+        // printf("AFTER BL: %d\n", tempCounters->number_of_blacklisted_IDs); 
       }
     }
   }
@@ -118,14 +118,14 @@ struct counting *analyse(struct pcap_pkthdr *header,
     struct arphdr *arp_Header = (struct arphdr *) &arp_Packet->ea_hdr;
 
 
-    printf("%d <--> %d\n", ntohs(arp_Header->ar_op), ARPOP_REPLY);
+    // printf("%d <--> %d\n", ntohs(arp_Header->ar_op), ARPOP_REPLY);
 
     if(ntohs(arp_Header->ar_op) == ARPOP_REPLY){
       //increment arp counter here
       //Detect ARP poisoning attack
-      printf("Arp before: %d\n", tempCounters->number_of_arp_attacks);
+      // printf("Arp before: %d\n", tempCounters->number_of_arp_attacks);
       tempCounters->number_of_arp_attacks=tempCounters->number_of_arp_attacks+1;
-      printf("Arp after: %d\n", tempCounters->number_of_arp_attacks);
+      // printf("Arp after: %d\n", tempCounters->number_of_arp_attacks);
     }
   }    
   
