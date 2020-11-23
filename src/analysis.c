@@ -23,7 +23,7 @@ struct ARPpacket {
 	uint8_t arp_tpa[4];
 };
 
-void addIpToTheList(struct list *linkedList, struct iphdr* iplayer){
+void linkedListWork(struct list *linkedList, struct iphdr* iplayer){
   if(linkedList->head == NULL){
     struct listelement *newElement = (struct listelement *) malloc(sizeof(struct listelement));
     newElement->val = iplayer->saddr;
@@ -63,7 +63,7 @@ struct counting *analyse(struct pcap_pkthdr *header,
              int verbose,
              struct list *linkedList
              ){
-  printf("DOES IT EVEN GET HERE\n");
+
   //define a new counting variable
   counting *tempCounters = malloc(sizeof(struct counting));
   tempCounters->number_of_arp_attacks = 0;
@@ -79,10 +79,9 @@ struct counting *analyse(struct pcap_pkthdr *header,
     if(!(tcplayer->urg && tcplayer->ack && tcplayer->psh && tcplayer->rst && tcplayer->fin)){
         printf("SYN\n");
         // printf("packet ip: %lu", iplayer->saddr);
-        tempCounters->number_of_syn_attacks= tempCounters->number_of_syn_attacks+1;
+        tempCounters->number_of_syn_attacks = tempCounters->number_of_syn_attacks+1;
         // printf("linked: %d", linkedList->head);
-        addIpToTheList(linkedList, iplayer);
-        // printf("before: %d\n", tempCounters->number_of_syn_attacks);
+        linkedListWork(linkedList, iplayer);
     }
   }
 
@@ -130,8 +129,6 @@ struct counting *analyse(struct pcap_pkthdr *header,
       printf("Arp after: %d\n", tempCounters->number_of_arp_attacks);
     }
   }    
-
-  if(verbose == 1) printpacket(packet, 1000);
   
   return tempCounters;
 }

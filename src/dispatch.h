@@ -5,7 +5,7 @@
 #include "sniff.h"
 #include "analysis.h"
 
-void dispatch(struct pcap_pkthdr *header, 
+struct counting *dispatch(struct pcap_pkthdr *header, 
               const unsigned char *packet,
               int verbose,
               struct list *list

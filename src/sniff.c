@@ -10,17 +10,16 @@
 #include "dispatch.h"
 #include "sniff.h"
 
-int synCount = 0;
+int synIpCount = 0;
 struct list *linkedList;
+struct counting *finalCount;
 
 // Application main sniffing loop
 
 void controlCHandler(int a){
-  if(linkedList->head!=NULL){
-    recursivelyFreeMemory(linkedList->head);
-    printf("all linked list data freed\n");
-  }
-  else printf("linked list was not used so no data was freed");
+  if(linkedList->head!=NULL) recursivelyFreeMemory(linkedList->head);
+  printf("all linked list data freed\n");
+  finalPrint(synIpCount);
   exit(0);
 }
 
@@ -29,10 +28,20 @@ void recursivelyFreeMemory(struct listelement *currentListElement){
     recursivelyFreeMemory(currentListElement->next);
   }
   free(currentListElement);
+  synIpCount++;
+}
+
+void finalPrint(int synIP){
+  printf("Intrusion Detection Report:\n");
+  printf("%d SYN packets detected from %d different IPs (syn attack)\n", finalCount->number_of_syn_attacks, synIP);
+  printf("%d ARP responses (cache poisoning)\n", finalCount->number_of_arp_attacks);
+  printf("%d URL Blacklist violations\n", finalCount->number_of_blacklisted_IDs);
+  free(finalCount);
 }
 
 void sniff(char *interface, int verbose) {
   linkedList = malloc(sizeof(struct list));
+  finalCount = malloc(sizeof(struct counting));
   linkedList->head = NULL;
   signal(SIGINT, &controlCHandler);
   // Open network interface for packet capture
@@ -60,13 +69,10 @@ void sniff(char *interface, int verbose) {
       if (verbose) {
         dump(packet, header.len);
       }
-      printf("DOES IT EVEN GET HERE\n");
-
-      declareThreads();
       // Dispatch packet for processing
-
-      dispatch(&header, packet, verbose, linkedList);
-      // printf("%d\n", synCount);
+      finalCount->number_of_arp_attacks += (dispatch(&header, packet, verbose, linkedList))->number_of_arp_attacks;
+      finalCount->number_of_syn_attacks += (dispatch(&header, packet, verbose, linkedList))->number_of_syn_attacks;
+      finalCount->number_of_blacklisted_IDs += (dispatch(&header, packet, verbose, linkedList))->number_of_blacklisted_IDs;
     }
   }
 }
