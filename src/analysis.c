@@ -113,6 +113,8 @@ struct counting *analyse(struct pcap_pkthdr *header,
     }
   }
 
+
+
   if(ntohs(linklayer->ether_type) == ETHERTYPE_ARP){
     const unsigned char *linklayerStripPackets = packet + ETH_HLEN;
     struct ARPpacket *arp_Packet = (struct ARPpacket *) linklayerStripPackets;
@@ -129,7 +131,7 @@ struct counting *analyse(struct pcap_pkthdr *header,
       printf("Arp after: %d\n", tempCounters->number_of_arp_attacks);
     }
   }    
-  
+
   return tempCounters;
 }
 
