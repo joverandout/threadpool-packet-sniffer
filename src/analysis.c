@@ -72,17 +72,18 @@ struct counting *analyse(struct pcap_pkthdr *header,
 
   struct ether_header *linklayer = (struct ether_header *) packet;
   struct iphdr *iplayer = (struct iphdr *) (packet+14);
-  struct tcphdr *tcplayer = (struct tcphdr *) (packet+14 + iplayer->ihl*4);
+  struct tcphdr *tcplayer = (struct tcphdr *) (packet+14 + (iplayer->ihl*4));
 
   if(tcplayer->syn){
     if(!(tcplayer->urg && tcplayer->ack && tcplayer->psh && tcplayer->rst && tcplayer->fin)){
-        // printf("SYN\n");
         // printf("packet ip: %lu", iplayer->saddr);
+        printf("the syn bit is %d\n", tcplayer->syn);
         tempCounters->number_of_syn_attacks = tempCounters->number_of_syn_attacks+1;
         // printf("linked: %d", linkedList->head);
         linkedListWork(linkedList, iplayer);
     }
   }
+
 
 
 

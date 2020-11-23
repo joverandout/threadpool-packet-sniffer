@@ -74,7 +74,6 @@ void *threadFunction(){
   while(runthreads){
     pthread_mutex_lock(&packetLock);
     if(packets->head != NULL){
-      printf("not null\n");
       struct packetListElement *temporaryThreadPacket = packets->head;
       packets->head = temporaryThreadPacket->next;
 
@@ -84,7 +83,6 @@ void *threadFunction(){
 
       localCountsPerThread->number_of_arp_attacks += temp->number_of_arp_attacks;
       localCountsPerThread->number_of_syn_attacks += temp->number_of_syn_attacks;
-      printf("ARP: %d\n", temp->number_of_arp_attacks);
       localCountsPerThread->number_of_blacklisted_IDs += temp->number_of_blacklisted_IDs;
 
       // free((void *)temporaryThreadPacket->packet);
@@ -107,7 +105,6 @@ void endThreads(){
       void* ptr;
       pthread_join(threads[i], &ptr);
 
-      printf("segfault here\n");
       struct counting *localCountsPerThread = (struct counting *)ptr;
 
       finalCount->number_of_arp_attacks += localCountsPerThread->number_of_arp_attacks;
@@ -177,17 +174,18 @@ void sniff(char *interface, int verbose) {
       toAdd->header = &header;
       toAdd->next =NULL;
 
+      printf("PACKET FROM SNIFF\n");
+      printpacket(toAdd->packet, 300);
+
 
       pthread_mutex_lock(&packetLock);
 
       if(packets->head == NULL) //there is no packets in the queue
       {
         packets->head = toAdd;
-        printf("added\n");
       }
       else{
         recursivelAddToQueue(packets->head, toAdd);
-        printf("added recursively\n");
       }
 
       pthread_mutex_unlock(&packetLock);
@@ -198,10 +196,6 @@ void sniff(char *interface, int verbose) {
     }
   }
 }
-
-
-
-
 
 void recursivelAddToQueue(struct packetListElement *head, struct packetListElement *toAdd){
   if(head->next == NULL){
