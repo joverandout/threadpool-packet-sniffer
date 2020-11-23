@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pcap.h>
+#include <pthread.h>
 #include <netinet/if_ether.h>
 #include <signal.h>
 
@@ -13,6 +14,8 @@
 int synIpCount = 0;
 struct list *linkedList;
 struct counting *finalCount;
+struct packetList *packets;
+pthread_t threads[2];
 
 // Application main sniffing loop
 
@@ -20,6 +23,7 @@ void controlCHandler(int a){
   if(linkedList->head!=NULL) recursivelyFreeMemory(linkedList->head);
   printf("all linked list data freed\n");
   finalPrint(synIpCount);
+  free(packets);
   exit(0);
 }
 
@@ -42,6 +46,7 @@ void finalPrint(int synIP){
 void sniff(char *interface, int verbose) {
   linkedList = malloc(sizeof(struct list));
   finalCount = malloc(sizeof(struct counting));
+  packets = malloc(sizeof(struct packetList));
   linkedList->head = NULL;
   signal(SIGINT, &controlCHandler);
   // Open network interface for packet capture
@@ -64,11 +69,33 @@ void sniff(char *interface, int verbose) {
       if (verbose) {
         // printf("No packet received. %s\n", pcap_geterr(pcap_handle));
       }
-    } else {
+      }
+      else {
       // Optional: dump raw data to terminal
       if (verbose) {
         dump(packet, header.len);
       }
+
+      //we have a packet now so add it to the packet queue
+
+      struct packetListElement *toAdd = malloc(sizeof(struct packetListElement));
+      toAdd->packet = packet;
+      toAdd->header = &header;
+      toAdd->next =NULL;
+
+      if(packets->head == NULL) //there is no packets in the queue
+      {
+        packets->head = toAdd;
+        // printf("added\n");
+      }
+      else{
+        recursivelAddToQueue(packets->head, toAdd);
+        // printf("added recursively\n");
+      }
+
+      
+
+
       // Dispatch packet for processing
       finalCount->number_of_arp_attacks += (dispatch(&header, packet, verbose, linkedList))->number_of_arp_attacks;
       finalCount->number_of_syn_attacks += (dispatch(&header, packet, verbose, linkedList))->number_of_syn_attacks;
@@ -77,6 +104,15 @@ void sniff(char *interface, int verbose) {
   }
 }
 
+
+void recursivelAddToQueue(struct packetListElement *head, struct packetListElement *toAdd){
+  if(head->next == NULL){
+    head->next = toAdd;
+  }
+  else{
+    recursivelAddToQueue(head->next, toAdd);
+  }
+}
 
 // Utility/Debugging method for dumping raw packet data
 void dump(const unsigned char *data, int length) {
