@@ -71,7 +71,7 @@ void recursivelyPrintSyns(struct packetListElement *packet){
   struct iphdr *iplayer = (struct iphdr *) (((packets->head->packet))+14);
   struct tcphdr *tcplayer = (struct tcphdr *) (((packets->head->packet))+14 + iplayer->ihl*4);
 
-  printf("%c ", packet);
+  printf("%d ", tcplayer->syn);
   if(packet->next !=NULL){
     recursivelyPrintSyns(packet->next);
   }
@@ -95,10 +95,6 @@ void *threadFunction(){
 
       struct packetListElement *temporaryThreadPacket = packets->head;
       packets->head = temporaryThreadPacket->next;
-
-
-
-
 
       struct counting *temp = dispatch(temporaryThreadPacket->header, temporaryThreadPacket->packet, 0, linkedList);
 
@@ -173,7 +169,7 @@ void sniff(char *interface, int verbose) {
   struct pcap_pkthdr header;
   const unsigned char *packet;
 
-  // makeThreads();
+  makeThreads();
 
   while (1) {
     // Capture a  packet
@@ -193,19 +189,31 @@ void sniff(char *interface, int verbose) {
       pthread_mutex_lock(&packetLock);
 
 
+      struct ether_header *linklayer = (struct ether_header *)packet;
+      struct iphdr *iplayer = (struct iphdr *) (packet+14);
+      struct tcphdr *tcplayer = (struct tcphdr *) (packet+14 + iplayer->ihl*4);
+
+      printf("PACKET BEFORE\n");
+      printSynpacket(packet, 50);
+      printf("\n");
 
 
       //we have a packet now so add it to the packet queue
 
-      struct packetListElement *toAdd = malloc(sizeof(struct packetListElement));
-      toAdd->packet =  (unsigned char *) malloc(sizeof(const unsigned char));
-      toAdd->header = (struct pcap_pkthdr *) malloc(sizeof(header.len*sizeof(unsigned char)));
-      memmove((void *)toAdd->header,(void *)&header,sizeof(header.len*sizeof(unsigned char)));
-      memmove((void *)toAdd->packet,(void *)packet,sizeof(unsigned char));
+      struct packetListElement *toAdd = (struct packetListElement *) malloc(sizeof(struct packetListElement));
+      toAdd->packet =  (unsigned char *) malloc(header.len*(sizeof(unsigned char)));
+      toAdd->header = (struct pcap_pkthdr *) malloc(sizeof(struct pcap_pkthdr));
+      memmove((void *)toAdd->header,(void *)&header,sizeof(struct pcap_pkthdr));
+      memmove((void *)toAdd->packet,(void *)packet,header.len);
 
-      toAdd->packet = packet;
-      toAdd->header = &header;
+      // toAdd->packet = packet;
+      // toAdd->header = &header;
       toAdd->next =NULL;
+
+      tcplayer = (struct tcphdr *) (((toAdd->packet)+14) + iplayer->ihl*4);
+      printf("\nPACKET AFTER\n");
+      printSynpacket(toAdd->packet, 50);
+      printf("\n");
 
 
 
@@ -225,9 +233,6 @@ void sniff(char *interface, int verbose) {
       printf("\n");
 
 
-      struct ether_header *linklayer = (struct ether_header *) toAdd->packet;
-      struct iphdr *iplayer = (struct iphdr *) (((toAdd->packet))+14);
-      struct tcphdr *tcplayer = (struct tcphdr *) (((toAdd->packet))+14 + iplayer->ihl*4);
 
 
       // printf("SYN OF PACKET PUT ON THE PILE %d\n", tcplayer->syn);
