@@ -68,22 +68,22 @@ struct counting *analyse(struct pcap_pkthdr *header,
   counting *tempCounters = malloc(sizeof(struct counting));
   tempCounters->number_of_arp_attacks = 0;
   tempCounters->number_of_syn_attacks = 0;
+  tempCounters->number_of_syn_IPS = 0;
   tempCounters->number_of_blacklisted_IDs=0;
 
   struct ether_header *linklayer = (struct ether_header *) packet;
   struct iphdr *iplayer = (struct iphdr *) (packet+14);
-  struct tcphdr *tcplayer = (struct tcphdr *) (packet+14 + (iplayer->ihl*4));
+  struct tcphdr *tcplayer = (struct tcphdr *) (packet+14 + iplayer->ihl*4);
 
   if(tcplayer->syn){
     if(!(tcplayer->urg && tcplayer->ack && tcplayer->psh && tcplayer->rst && tcplayer->fin)){
+        printf("SYN\n");
         // printf("packet ip: %lu", iplayer->saddr);
-        printf("the syn bit is %d\n", tcplayer->syn);
         tempCounters->number_of_syn_attacks = tempCounters->number_of_syn_attacks+1;
         // printf("linked: %d", linkedList->head);
         linkedListWork(linkedList, iplayer);
     }
   }
-
 
 
 
@@ -106,12 +106,14 @@ struct counting *analyse(struct pcap_pkthdr *header,
         new_string[x] = '\0';
       }    
       if (strstr(new_string, "www.google.co.uk") && (ntohs(tcplayer->dest) == 80)){
-        // printf("BEFORE BL: %d\n", tempCounters->number_of_blacklisted_IDs); 
+        printf("BEFORE BL: %d\n", tempCounters->number_of_blacklisted_IDs); 
         tempCounters->number_of_blacklisted_IDs = tempCounters->number_of_blacklisted_IDs+1;
-        // printf("AFTER BL: %d\n", tempCounters->number_of_blacklisted_IDs); 
+        printf("AFTER BL: %d\n", tempCounters->number_of_blacklisted_IDs); 
       }
     }
   }
+
+
 
   if(ntohs(linklayer->ether_type) == ETHERTYPE_ARP){
     const unsigned char *linklayerStripPackets = packet + ETH_HLEN;
@@ -119,17 +121,17 @@ struct counting *analyse(struct pcap_pkthdr *header,
     struct arphdr *arp_Header = (struct arphdr *) &arp_Packet->ea_hdr;
 
 
-    // printf("%d <--> %d\n", ntohs(arp_Header->ar_op), ARPOP_REPLY);
+    printf("%d <--> %d\n", ntohs(arp_Header->ar_op), ARPOP_REPLY);
 
     if(ntohs(arp_Header->ar_op) == ARPOP_REPLY){
       //increment arp counter here
       //Detect ARP poisoning attack
-      // printf("Arp before: %d\n", tempCounters->number_of_arp_attacks);
+      printf("Arp before: %d\n", tempCounters->number_of_arp_attacks);
       tempCounters->number_of_arp_attacks=tempCounters->number_of_arp_attacks+1;
-      // printf("Arp after: %d\n", tempCounters->number_of_arp_attacks);
+      printf("Arp after: %d\n", tempCounters->number_of_arp_attacks);
     }
   }    
-  
+
   return tempCounters;
 }
 

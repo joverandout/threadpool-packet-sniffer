@@ -14,6 +14,7 @@ struct counting *dispatch(struct pcap_pkthdr *header,
 
 typedef struct counting{
     unsigned int number_of_syn_attacks;
+    unsigned int number_of_syn_IPS;
     unsigned int number_of_arp_attacks;
     unsigned int number_of_blacklisted_IDs;
 } counting;

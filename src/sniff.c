@@ -7,6 +7,10 @@
 #include <netinet/if_ether.h>
 #include <signal.h>
 
+#include <netinet/ip.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+
 
 #include "dispatch.h"
 #include "sniff.h"
@@ -62,6 +66,18 @@ void finalPrint(int synIP){
   //free(finalCount);
 }
 
+void recursivelyPrintSyns(struct packetListElement *packet){
+  struct ether_header *linklayer = (struct ether_header *) packets->head->packet;
+  struct iphdr *iplayer = (struct iphdr *) (((packets->head->packet))+14);
+  struct tcphdr *tcplayer = (struct tcphdr *) (((packets->head->packet))+14 + iplayer->ihl*4);
+
+  printf("%c ", packet);
+  if(packet->next !=NULL){
+    recursivelyPrintSyns(packet->next);
+  }
+
+}
+
 void *threadFunction(){
   counting *localCountsPerThread = malloc(sizeof(struct counting));
 
@@ -74,8 +90,15 @@ void *threadFunction(){
   while(runthreads){
     pthread_mutex_lock(&packetLock);
     if(packets->head != NULL){
+      
+      
+
       struct packetListElement *temporaryThreadPacket = packets->head;
       packets->head = temporaryThreadPacket->next;
+
+
+
+
 
       struct counting *temp = dispatch(temporaryThreadPacket->header, temporaryThreadPacket->packet, 0, linkedList);
 
@@ -85,9 +108,8 @@ void *threadFunction(){
       localCountsPerThread->number_of_syn_attacks += temp->number_of_syn_attacks;
       localCountsPerThread->number_of_blacklisted_IDs += temp->number_of_blacklisted_IDs;
 
-      // free((void *)temporaryThreadPacket->packet);
-      // free(temp);
-      // free(temporaryThreadPacket);
+      free(temp);
+      free(temporaryThreadPacket);
     }
     else{
       pthread_mutex_unlock(&packetLock);
@@ -105,6 +127,7 @@ void endThreads(){
       void* ptr;
       pthread_join(threads[i], &ptr);
 
+      // printf("segfault here\n");
       struct counting *localCountsPerThread = (struct counting *)ptr;
 
       finalCount->number_of_arp_attacks += localCountsPerThread->number_of_arp_attacks;
@@ -150,7 +173,7 @@ void sniff(char *interface, int verbose) {
   struct pcap_pkthdr header;
   const unsigned char *packet;
 
-  makeThreads();
+  // makeThreads();
 
   while (1) {
     // Capture a  packet
@@ -167,35 +190,72 @@ void sniff(char *interface, int verbose) {
         dump(packet, header.len);
       }
 
+      pthread_mutex_lock(&packetLock);
+
+
+
+
       //we have a packet now so add it to the packet queue
 
       struct packetListElement *toAdd = malloc(sizeof(struct packetListElement));
+      toAdd->packet =  (unsigned char *) malloc(sizeof(const unsigned char));
+      toAdd->header = (struct pcap_pkthdr *) malloc(sizeof(header.len*sizeof(unsigned char)));
+      memmove((void *)toAdd->header,(void *)&header,sizeof(header.len*sizeof(unsigned char)));
+      memmove((void *)toAdd->packet,(void *)packet,sizeof(unsigned char));
+
       toAdd->packet = packet;
       toAdd->header = &header;
       toAdd->next =NULL;
 
-      printf("PACKET FROM SNIFF\n");
-      printpacket(toAdd->packet, 300);
 
-
-      pthread_mutex_lock(&packetLock);
 
       if(packets->head == NULL) //there is no packets in the queue
       {
         packets->head = toAdd;
+        printf("added\n");
+        
       }
       else{
         recursivelAddToQueue(packets->head, toAdd);
+        printf("added recursively\n");
       }
 
-      pthread_mutex_unlock(&packetLock);
+      printf("\nALL SYNS\n");
+      recursivelyPrintSyns(packets->head);
+      printf("\n");
 
+
+      struct ether_header *linklayer = (struct ether_header *) toAdd->packet;
+      struct iphdr *iplayer = (struct iphdr *) (((toAdd->packet))+14);
+      struct tcphdr *tcplayer = (struct tcphdr *) (((toAdd->packet))+14 + iplayer->ihl*4);
+
+
+      // printf("SYN OF PACKET PUT ON THE PILE %d\n", tcplayer->syn);
+
+
+      pthread_mutex_unlock(&packetLock);
 
       // Dispatch packet for processing
       
     }
   }
 }
+
+
+void printSynpacket(const unsigned char *packet, int length){
+  int i, j;
+  for (i = 0; i < length/4; i++) //number of lines
+  {
+    for (j = 0; j < 4; j++) //prevents more than 4 bytes on a line
+    {
+      printf("%02x ", *(packet+(i*4)+j)); // print a byte
+    }
+    printf("\n"); //and a line
+  }
+}
+
+
+
 
 void recursivelAddToQueue(struct packetListElement *head, struct packetListElement *toAdd){
   if(head->next == NULL){
