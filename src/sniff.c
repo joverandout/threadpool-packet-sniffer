@@ -30,32 +30,36 @@ pthread_mutex_t packetLock = PTHREAD_MUTEX_INITIALIZER;
 // Application main sniffing loop
 
 void controlCHandler(int a){
+  //since we've hit control c we now need to end the threads
   endThreads();
+  //and free all the memory of the syn counter linked list
   if(linkedList->head!=NULL) recursivelyFreeMemory(linkedList->head);
   printf("\nall linked list data freed\n");
+
+  //here we then need to free all the packets
   recursivelyFreePackets(packets);
   printf("all packet data freed\n");
+  //then we print our final data
   printf("========================================================\n");
-  finalPrint(synIpCount-1);
+  finalPrint(synIpCount);
   printf("========================================================\n");
-  exit(0);
+  exit(0); //and exit
 }
 
 void recursivelyFreeMemory(struct listelement *currentListElement){
-  if(currentListElement->next != NULL){
+  if(currentListElement->next != NULL){ //recursively move down to the final element
     recursivelyFreeMemory(currentListElement->next);
   }
-  //free(currentListElement);
-  synIpCount++;
+  free(currentListElement); //once at the final element remove it
+  synIpCount++; //and increase the number of syn ips since each element is unique
 }
 
 void recursivelyFreePackets(struct packetListElement *currentListElement){
-  if(currentListElement->next != NULL){
+  if(currentListElement->next != NULL){ //recursively move down to the final element
     recursivelyFreeMemory(currentListElement->next);
   }
-  synIpCount++;
-  //free(currentListElement->packet);
-  //free(currentListElement);
+  free(currentListElement->packet); //once at the final element remove it
+  free(currentListElement);
 }
 
 void finalPrint(int synIP){
@@ -63,7 +67,7 @@ void finalPrint(int synIP){
   printf("%d SYN packets detected from %d different IPs (syn attack)\n", finalCount->number_of_syn_attacks, synIP);
   printf("%d ARP responses (cache poisoning)\n", finalCount->number_of_arp_attacks);
   printf("%d URL Blacklist violations\n", finalCount->number_of_blacklisted_IDs);
-  //free(finalCount);
+  free(finalCount);
 }
 
 void recursivelyPrintSyns(struct packetListElement *packet){
@@ -130,7 +134,7 @@ void endThreads(){
       finalCount->number_of_syn_attacks += localCountsPerThread->number_of_syn_attacks;
       finalCount->number_of_blacklisted_IDs += localCountsPerThread->number_of_blacklisted_IDs;
     
-      //free(ptr);
+      free(ptr);
     }
   }
 }
@@ -154,20 +158,23 @@ void makeThreads(){
 }
 
 void sniff(char *interface, int verbose) {
+  printf("start\n");
   initialiseStructs();
   signal(SIGINT, &controlCHandler);
   // Open network interface for packet capture
   char errbuf[PCAP_ERRBUF_SIZE];
   pcap_t *pcap_handle = pcap_open_live(interface, 4096, 1, 0, errbuf);
   if (pcap_handle == NULL) {
-    // printf(stderr, "Unable to open interface %s\n", errbuf);
+    printf(stderr, "Unable to open interface %s\n", errbuf);
     exit(EXIT_FAILURE);
   } else {
-    // printf("SUCCESS! Opened %s for capture\n", interface);
+    printf("SUCCESS! Opened %s for capture\n", interface);
   }
   // Capture packets (very ugly code)
   struct pcap_pkthdr header;
   const unsigned char *packet;
+
+  printf("make threads\n");
 
   makeThreads();
 
@@ -177,7 +184,7 @@ void sniff(char *interface, int verbose) {
     if (packet == NULL) {
       // pcap_next can return null if no packet is seen within a timeout
       if (verbose) {
-        // printf("No packet received. %s\n", pcap_geterr(pcap_handle));
+        printf("No packet received. %s\n", pcap_geterr(pcap_handle));
       }
       }
       else {
