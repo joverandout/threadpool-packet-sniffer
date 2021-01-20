@@ -25,7 +25,6 @@ Then to connect to the VNC session log in using:
 Finally to make the files run
 ```
 ../build/idsniff -i <interface> 
-
 ```
 Replace `<interface>` with the name of the interface on which you wish to capture packets. If the -ioption is not used, i.e., no interface name is specified, then the program will assume the default interface name eth0 for the interface. (You can use the command ifconfig to see the details of the network interfaces used by a machine.)
 You can also use run the skeleton with the -v option to set the verbose flag to 1 or 0 as shown below
