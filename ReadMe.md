@@ -2,9 +2,13 @@
 
 ## Packet Sniffer using Threadpool Model to detect Syn, Arp, and Blacklisted URL attacks
 
+### Grade:
+
 A multi threaded packet sniffer for my operating systems and computer networks module.
 
 Grade 86%
+
+### Running Guide
 
 To run:
 ```
@@ -49,4 +53,5 @@ Intrusion Detection Report:
 4 ARP responses (cache poisoning)
 5 URL Blacklist violations
 ```
-
+### Disclaimer
+The code in this git repository is the copyright of Joe Moore and distribution or use is not allowed without explicit permission and without giving full credit
