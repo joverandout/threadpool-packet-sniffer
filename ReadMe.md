@@ -1,10 +1,11 @@
 # Packet Sniffer using Threadpool Model to detect Syn, Arp, and Blacklisted URL attacks
 
-## Grade:
-
 A multi threaded packet sniffer for my operating systems and computer networks module.
 
-Grade 86%
+## Grade:
+
+> Mark: 86% \
+> Grade: 1
 
 ## Running Guide:
 
